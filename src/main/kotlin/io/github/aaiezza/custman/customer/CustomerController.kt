@@ -3,6 +3,7 @@ package io.github.aaiezza.custman.customer
 import io.github.aaiezza.custman.customer.data.CreateCustomerStatement
 import io.github.aaiezza.custman.customer.data.GetAllCustomersStatement
 import io.github.aaiezza.custman.customer.data.GetCustomerByIdStatement
+import io.github.aaiezza.custman.customer.data.SoftDeleteCustomerStatement
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
 import io.github.aaiezza.custman.customer.models.Customers
@@ -23,6 +24,7 @@ class CustomerController(
     @Autowired private val getAllCustomersStatement: GetAllCustomersStatement,
     @Autowired private val createCustomerStatement: CreateCustomerStatement,
     @Autowired private val getCustomerByIdStatement: GetCustomerByIdStatement,
+    @Autowired private val softDeleteCustomerStatement: SoftDeleteCustomerStatement,
 ) {
     @GetMapping
     fun getAllCustomers(): ResponseEntity<Customers> =
@@ -58,6 +60,24 @@ class CustomerController(
             ResponseEntity.status(NOT_FOUND)
                 .errorMessageBody(ex)
         }
+
+    @DeleteMapping("/{customerId}")
+    fun deleteCustomer(@PathVariable("customerId") customerId: Customer.Id): ResponseEntity<Void> {
+        return softDeleteCustomerStatement.execute(customerId)
+            .let {
+                if (it) {
+                    CustomerDeleteLogEvent(customerId).info()
+                    ResponseEntity.noContent().build()
+                } else {
+                    DeleteCustomerExceptionLogEvent(
+                        customerId,
+                        CustomerNotFoundException(customerId),
+                        HttpMethod.DELETE, "/customer/${customerId.value}"
+                    ).error()
+                    ResponseEntity.notFound().build()
+                }
+            }
+    }
 }
 
 @RestControllerAdvice

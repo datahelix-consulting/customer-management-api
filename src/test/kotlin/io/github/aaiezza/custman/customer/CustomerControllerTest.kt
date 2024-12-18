@@ -33,6 +33,7 @@ class CustomerControllerTest {
         getAllCustomersStatement,
         createCustomerStatement,
         getCustomerByIdStatement,
+        softDeleteCustomerStatement
     )
 
     @Test
@@ -110,5 +111,22 @@ class CustomerControllerTest {
 
         // Verify
         verify(exactly = 1) { getCustomerByIdStatement.execute(customerId) }
+    }
+
+    @Test
+    fun `softDeleteCustomer should return 204 NO CONTENT`() {
+        // Arrange
+        val customerId = Customer.sample.customerId
+
+        every { softDeleteCustomerStatement.execute(customerId) } returns true
+
+        // Act
+        val response: ResponseEntity<Void> = customerController.deleteCustomer(customerId)
+
+        // Assert
+        assertThat(response.statusCode).isEqualTo(HttpStatus.NO_CONTENT)
+
+        // Verify
+        verify(exactly = 1) { softDeleteCustomerStatement.execute(customerId) }
     }
 }
