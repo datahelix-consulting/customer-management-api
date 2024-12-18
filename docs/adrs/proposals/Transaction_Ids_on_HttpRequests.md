@@ -15,7 +15,7 @@ This approach becomes especially valuable in scenarios where:
 
 A standardized TXID enables correlating events across these services, helping to identify issues, measure performance, and understand user behavior at a granular level.
 
-The concept aligns with the goals of Microsoft's **Correlation Vector** framework, which introduces a lightweight, hierarchical identifier for distributed tracing and telemetry. The Correlation Vector serves as an example of how structured transaction identifiers can enhance telemetry capabilities.
+The concept aligns with the goals of Microsoft's **[Correlation Vector](https://github.com/microsoft/CorrelationVector)** framework, which introduces a lightweight, hierarchical identifier for distributed tracing and telemetry. The Correlation Vector serves as an example of how structured transaction identifiers can enhance telemetry capabilities.
 
 ## Decision
 
