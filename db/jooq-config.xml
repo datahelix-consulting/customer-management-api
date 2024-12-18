@@ -1,0 +1,25 @@
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.19.8.xsd">
+    <jdbc>
+        <driver>org.postgresql.Driver</driver>
+        <url>jdbc:postgresql://database:5432/customer_db</url>
+        <user>customer_user</user>
+        <password>customer_pass</password>
+    </jdbc>
+    <generator>
+        <name>org.jooq.codegen.DefaultGenerator</name>
+        <database>
+            <name>org.jooq.meta.postgres.PostgresDatabase</name>
+            <inputSchema>public</inputSchema>
+        </database>
+        <target>
+            <packageName>io.github.aaiezza.custman.jooq.generated</packageName>
+            <directory>src/main/java</directory>
+        </target>
+        <generate>
+            <kotlinNotNullPojoAttributes>true</kotlinNotNullPojoAttributes>
+            <generatedAnnotation>true</generatedAnnotation>
+            <generatedAnnotationType>ORG_JOOQ_GENERATED</generatedAnnotationType>
+            <javaTimeTypes>true</javaTimeTypes>
+        </generate>
+    </generator>
+</configuration>
