@@ -1,12 +1,10 @@
 package io.github.aaiezza.custman.customer
 
-import io.github.aaiezza.custman.customer.data.CreateCustomerStatement
-import io.github.aaiezza.custman.customer.data.GetAllCustomersStatement
-import io.github.aaiezza.custman.customer.data.GetCustomerByIdStatement
-import io.github.aaiezza.custman.customer.data.SoftDeleteCustomerStatement
+import io.github.aaiezza.custman.customer.data.*
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
 import io.github.aaiezza.custman.customer.models.Customers
+import io.github.aaiezza.custman.customer.models.UpdateCustomerRequest
 import io.github.aaiezza.klogging.error
 import io.github.aaiezza.klogging.info
 import jakarta.servlet.http.HttpServletRequest
@@ -24,6 +22,7 @@ class CustomerController(
     @Autowired private val getAllCustomersStatement: GetAllCustomersStatement,
     @Autowired private val createCustomerStatement: CreateCustomerStatement,
     @Autowired private val getCustomerByIdStatement: GetCustomerByIdStatement,
+    @Autowired private val updateCustomerStatement: UpdateCustomerStatement,
     @Autowired private val softDeleteCustomerStatement: SoftDeleteCustomerStatement,
 ) {
     @GetMapping
@@ -60,6 +59,50 @@ class CustomerController(
             ResponseEntity.status(NOT_FOUND)
                 .errorMessageBody(ex)
         }
+
+    @PutMapping("/{customerId}")
+    fun updateCustomer(
+        @PathVariable("customerId") customerId: Customer.Id,
+        @RequestBody request: UpdateCustomerRequest
+    ): ResponseEntity<*> {
+        return runCatching {
+            getCustomerByIdStatement.execute(customerId)
+                ?.let {
+                    updateCustomerStatement.execute(it.customerId, request)
+                } ?: throw CustomerNotFoundException(customerId)
+        }
+            .map { updatedCustomer ->
+                CustomerUpdatedLogEvent(updatedCustomer).info()
+                ResponseEntity.ok(updatedCustomer)
+            }
+            .recover {
+                when (it) {
+                    is CustomerAlreadyExistsWithGivenEmailException -> run {
+                        UpdateCustomerExceptionLogEvent(
+                            customerId,
+                            it,
+                            HttpMethod.PUT,
+                            "/customer/${customerId.value}"
+                        ).error()
+                        ResponseEntity.status(CONFLICT)
+                            .errorMessageBody(it)
+                    }
+
+                    is CustomerNotFoundException -> run {
+                        UpdateCustomerExceptionLogEvent(
+                            customerId,
+                            it,
+                            HttpMethod.PUT,
+                            "/customer/${customerId.value}"
+                        ).error()
+                        ResponseEntity.status(NOT_FOUND)
+                            .errorMessageBody(it)
+                    }
+
+                    else -> throw it
+                }
+            }.getOrThrow()
+    }
 
     @DeleteMapping("/{customerId}")
     fun deleteCustomer(@PathVariable("customerId") customerId: Customer.Id): ResponseEntity<Void> {
