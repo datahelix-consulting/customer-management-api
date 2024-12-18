@@ -2,7 +2,6 @@ package io.github.aaiezza.custman.customer.data
 
 import assertk.assertThat
 import assertk.assertions.isFalse
-import assertk.assertions.isSuccess
 import assertk.assertions.isTrue
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
@@ -64,7 +63,7 @@ class EmailExistsStatementIT(
         )
         val createdCustomer = createCustomerStatement.execute(request)
 
-        assertThat { softDeleteCustomerStatement.execute(createdCustomer.customerId) }.isSuccess().isTrue()
+        assertThat(softDeleteCustomerStatement.execute(createdCustomer.customerId)).isTrue()
 
         // Act
         val emailExists = subject.execute(request.emailAddress)

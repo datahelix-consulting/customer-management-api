@@ -1,5 +1,6 @@
 package io.github.aaiezza.custman.customer.data
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.*
 import io.github.aaiezza.custman.customer.CustomerAlreadyExistsWithGivenEmailException
@@ -83,8 +84,7 @@ class UpdateCustomerStatementIT(
         )
 
         // Act & Assert
-        assertThat { subject.execute(nonExistentCustomerId, updateRequest) }
-            .isFailure()
+        assertFailure { subject.execute(nonExistentCustomerId, updateRequest) }
             .isInstanceOf(CustomerNotFoundException::class)
             .hasMessage("A customer with id `${nonExistentCustomerId.uuid}` was not found")
     }
@@ -113,7 +113,7 @@ class UpdateCustomerStatementIT(
         assertThat(updatedCustomer.emailAddress).isEqualTo(updatedRequest.emailAddress)
 
         // Act: Soft delete the customer
-        assertThat { softDeleteCustomerStatement.execute(originalCustomer.customerId) }.isSuccess().isTrue()
+        assertThat(softDeleteCustomerStatement.execute(originalCustomer.customerId)).isTrue()
 
         // Assert: Ensure the customer is soft-deleted
         val softDeletedCustomer = getCustomerByIdStatement.execute(originalCustomer.customerId)
@@ -131,8 +131,7 @@ class UpdateCustomerStatementIT(
             phoneNumber = Customer.PhoneNumber("+1234567890")
         )
 
-        assertThat { subject.execute(originalCustomer.customerId, failedUpdateRequest) }
-            .isFailure()
+        assertFailure { subject.execute(originalCustomer.customerId, failedUpdateRequest) }
             .isInstanceOf(CustomerNotFoundException::class)
             .hasMessage("A customer with id `${originalCustomer.customerId.uuid}` was not found")
     }
@@ -155,13 +154,12 @@ class UpdateCustomerStatementIT(
         )
 
         // Act & Assert: Attempt to update customer's email that is owned by another customer
-        assertThat {
+        assertFailure {
             updateCustomerStatement.execute(
                 existingCustomerB.customerId,
                 UpdateCustomerRequest(emailAddress = existingCustomerA.emailAddress)
             )
         }
-            .isFailure()
             .isInstanceOf(CustomerAlreadyExistsWithGivenEmailException::class)
             .messageContains("A customer with email `unique@example.com` already exists")
 

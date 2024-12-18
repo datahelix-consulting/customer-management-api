@@ -1,7 +1,10 @@
 package io.github.aaiezza.custman.customer.data
 
 import assertk.assertThat
-import assertk.assertions.*
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
 import io.github.aaiezza.custman.customer.models.sample
@@ -67,7 +70,7 @@ class GetCustomerByEmailAddressStatementIT(
         val createdCustomer = createCustomerStatement.execute(request)
 
         // Simulate soft-delete
-        assertThat { softDeleteCustomerStatement.execute(createdCustomer.customerId) }.isSuccess().isTrue()
+        assertThat(softDeleteCustomerStatement.execute(createdCustomer.customerId)).isTrue()
 
         // Act
         val retrievedCustomer = subject.execute(request.emailAddress)

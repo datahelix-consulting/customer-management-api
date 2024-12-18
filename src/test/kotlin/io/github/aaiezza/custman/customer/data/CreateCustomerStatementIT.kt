@@ -1,7 +1,11 @@
 package io.github.aaiezza.custman.customer.data
 
+import assertk.assertFailure
 import assertk.assertThat
-import assertk.assertions.*
+import assertk.assertions.hasMessage
+import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotNull
 import io.github.aaiezza.custman.customer.CustomerAlreadyExistsWithGivenEmailException
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.sample
@@ -52,7 +56,7 @@ class CreateCustomerStatementIT(
         subject.execute(CreateCustomerRequest.sample)
 
         // Act & Assert
-        assertThat { subject.execute(CreateCustomerRequest.sample) }.isFailure()
+        assertFailure { subject.execute(CreateCustomerRequest.sample) }
             .isInstanceOf(CustomerAlreadyExistsWithGivenEmailException::class)
             .hasMessage("A customer with email `johnny+company@gmail.com` already exists")
     }

@@ -1,7 +1,10 @@
 package io.github.aaiezza.custman.customer.data
 
 import assertk.assertThat
-import assertk.assertions.*
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
 import io.github.aaiezza.custman.customer.models.sample
@@ -74,7 +77,7 @@ class GetAllCustomersStatementIT(
         )
 
         // Simulate soft-delete for customer1
-        assertThat { softDeleteCustomerStatement.execute(customer1.customerId) }.isSuccess().isTrue()
+        assertThat(softDeleteCustomerStatement.execute(customer1.customerId)).isTrue()
 
         // Act
         val customers = subject.execute()
