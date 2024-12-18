@@ -69,5 +69,25 @@ services:
       retries: 10
       start_period: 15s
 
+  postman:
+    image: dannydainton/htmlextra
+    container_name: postman_tests
+    command: >
+      run /etc/newman/acceptance_tests.postman_collection.json
+      --reporters cli,htmlextra
+      --reporter-htmlextra-export /etc/newman/reports/report.html
+      --reporter-htmlextra-title "Acceptance Test Report"
+      --reporter-htmlextra-title-size 2
+      --reporter-htmlextra-logs
+      --verbose
+    volumes:
+      - ./postman:/etc/newman
+      - ./target:/etc/newman/reports
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - default
+
 volumes:
   postgres_data:
