@@ -1,4 +1,4 @@
-# 1. Decision to Use Flyway for Database Migrations
+# 0. Decision to Use Architectural Design Records
 
 ## Status
 
@@ -6,21 +6,16 @@
 
 ## Context
 
-Managing database schema changes in a consistent and reliable manner is crucial for the success of this project. Without a standardized approach, maintaining version control for the database schema could lead to discrepancies, making deployments and rollbacks difficult and error-prone.
-
-Flyway is a widely-used database migration tool that integrates seamlessly with a variety of relational databases, including PostgreSQL, which is the database for this project. Its version-controlled migration files offer a straightforward mechanism for tracking schema changes and applying them across environments.
+Michael Nygard introduced a valuable template for documenting architectural decisions as a running list of Markdown files. This project adopts that practice to ensure a systematic approach to recording key architectural choices. Documenting the decision to use ADRs also acknowledges the importance of this methodology and pays homage to its creator.
 
 ## Decision
 
-This project will use **[Flyway](https://en.wikipedia.org/wiki/Flyway_(software))** to manage database migrations.
+This project will use Architectural Decision Records (ADRs) to document architectural decisions consistently.
 
 ## Consequences
 
-- **Version Control for Database Schema**: Schema changes will be tracked in a versioned format, enabling better management and visibility of database modifications.
-- **Consistency Across Environments**: Flyway ensures that schema changes are applied uniformly across all environments (development, testing, production), reducing the likelihood of environment-specific issues.
-- **Rollback Capability**: Flyway supports controlled rollbacks of database changes, allowing for safer deployment processes and easier recovery from errors.
-- **Seamless Integration**: Flyway's compatibility with Maven and Spring Boot simplifies integration into the project’s existing toolchain.
-- **Reduced Human Error**: Automated migration processes minimize the risks associated with manual schema updates.
-- **Transparent History**: Flyway's migration history provides a clear record of changes, supporting debugging and audits.
+- **Centralized Documentation**: Architectural decisions will be well-documented in a single, accessible location.
+- **Historical Context**: Developers and stakeholders can reference the rationale behind specific decisions, providing clarity on the project's evolution.
+- **Improved Transparency**: The documentation will highlight the reasoning behind selected technologies, design patterns, schemas, and other decisions, emphasizing how they align with user, client, and developer priorities (in that order).
 
-By choosing Flyway, the project adopts a proven solution that enhances database management, supports agile development practices, and aligns with the project's priorities for reliability and maintainability.
+By maintaining this practice, the project fosters a culture of thoughtful decision-making and accountability.

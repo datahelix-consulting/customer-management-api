@@ -1,4 +1,4 @@
-# Decision to Use Dependabot for Dependency Management
+# 9. Decision to Use Dependabot for Dependency Management
 
 ## Status
 
