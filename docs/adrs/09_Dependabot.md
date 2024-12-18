@@ -81,4 +81,3 @@ updates:
 ## Conclusion
 
 Dependabot provides an automated, secure, and reliable solution for managing dependencies in the project. Its seamless integration with GitHub and robust feature set align with the project’s goals of maintainability, security, and efficiency. The team will adopt Dependabot to streamline dependency management, reducing technical debt and enhancing the project’s overall stability.
-
