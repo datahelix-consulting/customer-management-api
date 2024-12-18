@@ -1,0 +1,134 @@
+name: Maven Build, Docker Image, and Postman Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Set up JDK 21 Corretto
+      - name: Set up JDK 21 (Corretto)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      # Run Maven Build
+      - name: Run Maven Build
+        run: mvn clean package
+
+      # Upload the target directory as an artifact
+      - name: Upload Maven Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-build
+          path: target/
+
+  acceptance-tests:
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Download Maven Build Artifacts
+      - name: Download Maven Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: maven-build
+          path: target/
+
+      # Build Docker Image
+      - name: Build Docker Image
+        run: docker build -t customer-management-api .
+
+      # Create a Docker Network
+      - name: Create Docker Network
+        run: docker network create test-network
+
+      # Start the Database Container
+      - name: Start Database Container
+        run: |
+          docker run -d --name database --network test-network \
+            -e POSTGRES_USER=customer_user \
+            -e POSTGRES_PASSWORD=customer_pass \
+            -e POSTGRES_DB=customer_db \
+            -p 5432:5432 postgres:15-alpine
+          echo "Waiting for database to be ready..."
+          until docker exec database pg_isready -U customer_user -d customer_db; do
+            sleep 3
+          done
+          echo "Database is ready!"
+
+      # Run Flyway Migrations
+      - name: Run Flyway Migrations
+        run: |
+          docker run --rm --network test-network \
+            --name maven_flyway_migration \
+            -v $(pwd):/usr/src/app \
+            -v ~/.m2:/root/.m2 \
+            -w /usr/src/app \
+            maven:3.9.9-amazoncorretto-21-alpine \
+            mvn flyway:migrate -P flyway
+
+      # Start the App Container with Health Check
+      - name: Start App Container
+        run: |
+          docker run -d --name app --network test-network \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/customer_db \
+            -e SPRING_DATASOURCE_USERNAME=customer_user \
+            -e SPRING_DATASOURCE_PASSWORD=customer_pass \
+            --health-cmd "curl --fail http://localhost:8080/actuator/health || exit 1" \
+            --health-interval 5s --health-retries 5 --health-timeout 3s \
+            -p 8080:8080 customer-management-api
+
+      # Wait for App Container to be Healthy
+      - name: Wait for App Health
+        run: |
+          echo "Waiting for app container to be healthy..."
+          for i in {1..10}; do
+            health=$(docker inspect --format='{{.State.Health.Status}}' app)
+            if [ "$health" = "healthy" ]; then
+              echo "App container is healthy!"
+              exit 0
+            fi
+            echo "App container status: $health. Retrying..."
+            sleep 5
+          done
+          echo "App container did not become healthy in time."
+          docker logs app
+          exit 1
+
+      # Run Postman Tests with Newman
+      - name: Run Postman Tests
+        run: |
+          docker run --rm --network test-network \
+            -v $(pwd)/postman:/etc/newman dannydainton/htmlextra \
+            run /etc/newman/acceptance_tests.postman_collection.json \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export /etc/newman/reports/report.html \
+            --env-var host=http://app:8080
+      # TODO: actually _use_ this env-var in the future instead of the hardcoded one in the collection
+
+      # Upload Postman Test Report as Artifact
+      - name: Upload Postman Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-test-report
+          path: postman/reports/report.html
+
+      # Clean up Docker Network and Containers
+      - name: Clean Up
+        run: |
+          docker stop app database
+          docker network rm test-network
