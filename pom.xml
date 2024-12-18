@@ -233,6 +233,31 @@
 
     <profiles>
         <profile>
+            <id>jooq-codegen</id>
+            <build>
+                <plugins>
+                    <!-- jOOQ Code Generation Plugin -->
+                    <plugin>
+                        <groupId>org.jooq</groupId>
+                        <artifactId>jooq-codegen-maven</artifactId>
+                        <version>${jooq.version}</version>
+                        <executions>
+                            <execution>
+                                <id>generate-sources</id>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                                <configuration>
+                                    <configurationFile>${project.basedir}/db/jooq-config.xml</configurationFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
             <id>flyway</id>
             <build>
                 <plugins>
