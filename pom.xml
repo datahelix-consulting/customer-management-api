@@ -97,7 +97,7 @@
         <dependency>
             <groupId>com.willowtreeapps.assertk</groupId>
             <artifactId>assertk-jvm</artifactId>
-            <version>0.25</version>
+            <version>0.28.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
