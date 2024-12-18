@@ -3,9 +3,12 @@ package io.github.aaiezza.custman.customer
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.github.aaiezza.custman.customer.data.CreateCustomerStatement
+import io.github.aaiezza.custman.customer.data.GetAllCustomersStatement
 import io.github.aaiezza.custman.customer.data.GetCustomerByIdStatement
+import io.github.aaiezza.custman.customer.data.SoftDeleteCustomerStatement
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
+import io.github.aaiezza.custman.customer.models.Customers
 import io.github.aaiezza.custman.customer.models.sample
 import io.mockk.every
 import io.mockk.mockk
@@ -20,11 +23,14 @@ import java.util.*
 class CustomerControllerTest {
 
     // Mock all required executors
+    private val getAllCustomersStatement: GetAllCustomersStatement = mockk()
     private val createCustomerStatement: CreateCustomerStatement = mockk()
     private val getCustomerByIdStatement: GetCustomerByIdStatement = mockk()
+    private val softDeleteCustomerStatement: SoftDeleteCustomerStatement = mockk()
 
     // Instantiate the controller with mocked executors
     private val customerController = CustomerController(
+        getAllCustomersStatement,
         createCustomerStatement,
         getCustomerByIdStatement,
     )
@@ -46,6 +52,27 @@ class CustomerControllerTest {
 
         // Verify
         verify(exactly = 1) { createCustomerStatement.execute(createRequest) }
+    }
+
+    @Test
+    fun `getAllCustomers should return 200 OK with customer list`() {
+        // Arrange
+        val customers = listOf(
+            Customer.sample,
+            Customer.sample.copy(customerId = Customer.Id(UUID.randomUUID()))
+        ).let(::Customers)
+
+        every { getAllCustomersStatement.execute() } returns customers
+
+        // Act
+        val response: ResponseEntity<Customers> = customerController.getAllCustomers()
+
+        // Assert
+        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(response.body).isEqualTo(customers)
+
+        // Verify
+        verify(exactly = 1) { getAllCustomersStatement.execute() }
     }
 
     @Test

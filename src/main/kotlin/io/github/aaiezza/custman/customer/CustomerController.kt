@@ -1,9 +1,11 @@
 package io.github.aaiezza.custman.customer
 
 import io.github.aaiezza.custman.customer.data.CreateCustomerStatement
+import io.github.aaiezza.custman.customer.data.GetAllCustomersStatement
 import io.github.aaiezza.custman.customer.data.GetCustomerByIdStatement
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
 import io.github.aaiezza.custman.customer.models.Customer
+import io.github.aaiezza.custman.customer.models.Customers
 import io.github.aaiezza.klogging.error
 import io.github.aaiezza.klogging.info
 import jakarta.servlet.http.HttpServletRequest
@@ -18,9 +20,14 @@ import java.net.URI
 @RestController
 @RequestMapping("/customer")
 class CustomerController(
+    @Autowired private val getAllCustomersStatement: GetAllCustomersStatement,
     @Autowired private val createCustomerStatement: CreateCustomerStatement,
     @Autowired private val getCustomerByIdStatement: GetCustomerByIdStatement,
 ) {
+    @GetMapping
+    fun getAllCustomers(): ResponseEntity<Customers> =
+        getAllCustomersStatement.execute()
+            .let { ResponseEntity.ok(it) }
 
     @PostMapping
     fun createCustomer(@RequestBody request: CreateCustomerRequest): ResponseEntity<*> =
