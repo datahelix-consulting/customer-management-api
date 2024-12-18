@@ -1,7 +1,9 @@
 package io.github.aaiezza.custman.customer
 
 import io.github.aaiezza.custman.customer.data.CreateCustomerStatement
+import io.github.aaiezza.custman.customer.data.GetCustomerByIdStatement
 import io.github.aaiezza.custman.customer.models.CreateCustomerRequest
+import io.github.aaiezza.custman.customer.models.Customer
 import io.github.aaiezza.klogging.error
 import io.github.aaiezza.klogging.info
 import jakarta.servlet.http.HttpServletRequest
@@ -17,7 +19,9 @@ import java.net.URI
 @RequestMapping("/customer")
 class CustomerController(
     @Autowired private val createCustomerStatement: CreateCustomerStatement,
+    @Autowired private val getCustomerByIdStatement: GetCustomerByIdStatement,
 ) {
+
     @PostMapping
     fun createCustomer(@RequestBody request: CreateCustomerRequest): ResponseEntity<*> =
         runCatching { createCustomerStatement.execute(request) }
@@ -37,6 +41,16 @@ class CustomerController(
                     else -> throw it
                 }
             }.getOrThrow()
+
+    @GetMapping("/{customerId}")
+    fun getCustomerById(@PathVariable("customerId") customerId: Customer.Id): ResponseEntity<*> =
+        getCustomerByIdStatement.execute(customerId)
+            ?.let { customer -> ResponseEntity.ok(customer) } ?: run {
+            val ex = CustomerNotFoundException(customerId)
+            GetCustomerExceptionLogEvent(customerId, ex, HttpMethod.GET, "/customer/${customerId.value}").error()
+            ResponseEntity.status(NOT_FOUND)
+                .errorMessageBody(ex)
+        }
 }
 
 @RestControllerAdvice
