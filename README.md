@@ -3,6 +3,7 @@
 This project provides a RESTful API for managing customer data. It uses **Kotlin**, **Spring Boot**, **Postgres**, and **jOOQ** for type-safe database interactions. The API supports basic CRUD operations, along with validations, custom exception handling, and observability. It also includes automated acceptance testing, containerization for deployment, and instructions for Kubernetes integration.
 
 **Key Features:**
+
 - **Kotlin + Spring Boot**: Simple, concise, and robust backend.
 - **Postgres + jOOQ**: Type-safe SQL queries and schema management.
 - **Validation & Exceptions**: Constructor validation and custom HTTP responses.
@@ -15,15 +16,15 @@ This project provides a RESTful API for managing customer data. It uses **Kotlin
 ---
 
 ## Table of Contents
+
 - [Architecture Overview](#architecture-overview)
 - [Setup and Prerequisites](#setup-and-prerequisites)
-- [Database Configuration](#database-configuration)
 - [Running the Application](#running-the-application)
-- [Usage](#usage)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
 - [CI/CD and Deployment](#cicd-and-deployment)
 - [Kubernetes](#kubernetes)
+   - [Deploying Locally](#deploying-locally)
 - [Contributing](#contributing)
 
 ---
@@ -77,8 +78,8 @@ sequenceDiagram
     API-->>Client: 204 No Content or 404 Not Found
 ```
 
-
 **Components:**
+
 - **Client Application**: A CLI tool, frontend, or any HTTP client consuming the API.
 - **Customer Management API**: Spring Boot application exposing CRUD endpoints.
 - **Postgres Database**: Stores customer records. Interacted with via jOOQ.
@@ -90,170 +91,216 @@ sequenceDiagram
 ## Setup and Prerequisites
 
 ### Prerequisites
+
 1. **Java 21+**: Install from [Amazon Corretto](https://aws.amazon.com/corretto/) or your package manager.
 2. **Maven 3.8+**: Verify installation with `mvn -v`.
 3. **Docker & Docker Compose**: For running Postgres and Newman tests easily.
-4. **Postgres**: Run locally or via Docker.
+4. **kubectl**: Command-line tool for Kubernetes.
+5. **Minikube**: Local Kubernetes cluster for testing.
 
 ### Repository
+
 Clone the repository:
+
 ```bash
-git clone https://github.com/your-username/customer-management-api.git
+git clone https://github.com/aaiezza/customer-management-api.git
 cd customer-management-api
-```
-
----
-
-## Database Configuration
-
-A sample `docker-compose.yml` for Postgres:
-```yaml
-version: '3.9'
-services:
-  db:
-    image: postgres:14-alpine
-    container_name: customer_db
-    environment:
-      POSTGRES_USER: customer_user
-      POSTGRES_PASSWORD: customer_pass
-      POSTGRES_DB: customer_db
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U customer_user -d customer_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-```
-
-Start the database:
-```bash
-docker-compose up -d
-```
-
-Environment Variables (in `.env` or your environment):
-```env
-DATABASE_URL=jdbc:postgresql://localhost:5432/customer_db
-DATABASE_USER=customer_user
-DATABASE_PASSWORD=customer_pass
 ```
 
 ---
 
 ## Running the Application
 
+### Local Development
+
 Build the project:
+
 ```bash
 mvn clean install
 ```
 
 Run the application:
+
 ```bash
 mvn spring-boot:run
 ```
 
 The API is now available at: [http://localhost:8080](http://localhost:8080)
 
-To containerize:
-```bash
-docker build -t your-username/customer-management-api .
-docker run -p 8080:8080 --env-file .env your-username/customer-management-api
-```
+### Local Development with Docker Compose
 
----
+Alternatively, you can use Docker Compose to run the application along with Postgres locally:
 
-## Usage
+1. Ensure Docker is running.
+2. Run the following command:
 
-**Endpoints:**
-- **Create a Customer**: `POST /customers`
-- **List Customers**: `GET /customers`
-- **Get Customer by ID**: `GET /customers/{id}`
-- **Update a Customer**: `PUT /customers/{id}`
-- **Delete a Customer**: `DELETE /customers/{id}`
+   ```bash
+   docker-compose up app
+   ```
 
-Use `curl`, Postman, or any HTTP client to interact with the API.
+This will build and run the Spring Boot application, as well as a Postgres database.
+
+The API will be available at: [http://localhost:8080](http://localhost:8080)
+
+### Local Kubernetes Deployment
+
+Ensure **Minikube** and **kubectl** are installed and configured.
+
+1. **Start Minikube:**
+   ```bash
+   minikube start --memory=6144 --cpus=4
+   ```
+
+2. **Run the Startup Script:**
+   Execute the provided script to set up the project in Minikube:
+   ```bash
+   ./scripts/start-kubernetes.sh
+   ```
+
+3. **Access the Application:**
+   Retrieve the Minikube service URL:
+   ```bash
+   minikube service customer-management-api --url
+   ```
+
+4. **Monitor Application Pods:**
+   ```bash
+   kubectl get pods --watch
+   ```
+
+5. **Shut Down the Environment:**
+   To stop and clean up Minikube resources, run:
+   ```bash
+   ./scripts/shutdown-kubernetes.sh
+   ```
 
 ---
 
 ## API Documentation
 
-### Local Swagger UI
-Once running locally:
-- **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **OpenAPI Spec**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Swagger UI:** [View API Documentation](https://aaiezza.github.io/customer-management-api/docs/swagger/)
 
-### Hosting Swagger UI on GitHub Pages
-1. Generate a static site from the OpenAPI spec (e.g., using Swagger Codegen).
-2. Place the generated files in a `docs/` folder at the repository root.
-3. Enable GitHub Pages in the repository settings, pointing to `docs/`.
-4. Update this README with:
-   ```markdown
-   **Interactive Swagger UI (GitHub Pages)**: [https://your-username.github.io/customer-management-api](https://your-username.github.io/customer-management-api)
+The Swagger UI provides an interactive interface for exploring and testing the API endpoints defined in the [OpenAPI Specification](docs/openapi.yaml).
+
+### Swagger Generation Steps:
+
+1. Install and run the `swaggerapi/swagger-ui` Docker container to serve your OpenAPI spec.
+2. Extract Swagger static files:
+   ```bash
+   docker create --name swagger-ui-extract swaggerapi/swagger-ui
+   docker cp swagger-ui-extract:/usr/share/nginx/html ./swagger-static
+   docker rm swagger-ui-extract
    ```
+3. Move `swagger-static` into `docs/swagger`:
+
+```bash
+mv swagger-static docs/swagger
+```
+
+4. Update `docs/swagger/swagger-initializer.js` to reference the OpenAPI spec:
+
+```javascript
+url: "../openapi.yaml"
+```
+
+5. Commit and push changes, then enable GitHub Pages to serve from the `docs` folder.
+
+---
+
+## jOOQ Code Generation
+
+jOOQ generates type-safe database schema classes. To run the code generation:
+
+   ```bash
+   mvn clean install -Pjooq-codegen
+   ```
+
+This will generate the database schema classes in `target/generated-sources/jooq`.
 
 ---
 
 ## Testing
 
-1. **Unit Tests**:
+### Unit Tests
+
+Run unit tests:
+
+```bash
+mvn test
+```
+
+### Acceptance Tests (Postman + Newman)
+
+To simplify acceptance testing, you can leverage the provided `docker-compose` configuration to run Newman:
+
+1. Ensure Docker is running.
+2. Run the acceptance tests with:
+
    ```bash
-   mvn test
+   docker-compose up postman
    ```
 
-2. **Acceptance Tests (Postman + Newman)**:
-    - Ensure `postman/collection.json` is available.
-    - Run with Newman:
-      ```bash
-      docker run -v $(pwd)/postman:/etc/newman postman/newman run /etc/newman/collection.json
-      ```
+This will execute the Postman collection against the running API and generate a report.
 
 ---
 
 ## CI/CD and Deployment
 
 **GitHub Actions Workflow:**
+
 - Set up a workflow in `.github/workflows/ci.yml` that triggers on merges to `main`.
-- Steps:
-    1. Checkout code.
-    2. Set up Java and build with Maven.
-    3. Run unit and acceptance tests.
-    4. Build and push Docker image to a registry.
-    5. Deploy to test or prod environments if configured.
+   - Steps:
+      1. Checkout code.
+      2. Set up Java and build with Maven.
+      3. Run unit and acceptance tests.
+      4. Build and push Docker image to a registry.
+      5. Deploy to test or prod environments if configured.
 
 ---
 
 ## Kubernetes
 
-To deploy to Kubernetes:
-1. Create `deployment.yaml` and `service.yaml` in `k8s/`:
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: customer-management-api
-   spec:
-     replicas: 2
-     selector:
-       matchLabels:
-         app: customer-management-api
-     template:
-       metadata:
-         labels:
-           app: customer-management-api
-       spec:
-         containers:
-         - name: customer-management-api
-           image: your-username/customer-management-api:latest
-           ports:
-           - containerPort: 8080
-   ```
+### Setting Up Secrets
 
-2. Deploy:
+Before running the project, create a `secrets.yaml` file for your credentials:
+
+1. Copy `secrets.yaml.template` to `secrets.yaml`.
+2. Replace `<base64-encoded-username>` and `<base64-encoded-token>` with your Base64-encoded Git credentials.
+   - Use the following commands to encode your credentials:
+     ```
+     echo -n 'your-username' | base64
+     echo -n 'your-token' | base64
+     ```
+3. Save the file in the same directory as the template.
+
+**Important**: Do not commit `secrets.yaml` to the repository. It is excluded by `.gitignore`.
+
+### Deploying Locally
+
+1. **Start Minikube:**
    ```bash
-   kubectl apply -f k8s/
+   minikube start --memory=6144 --cpus=4
    ```
 
-3. Access the application via `kubectl port-forward` or a LoadBalancer/Ingress.
+2. **Run the Startup Script:**
+   ```bash
+   ./scripts/start-kubernetes.sh
+   ```
+
+3. **Monitor Application Status:**
+   ```bash
+   kubectl get pods
+   ```
+
+4. **Access the Service:**
+   ```bash
+   minikube service customer-management-api
+   ```
+
+5. **Shut Down the Environment:**
+   ```bash
+   ./scripts/shutdown-kubernetes.sh
+   ```
 
 ---
 
