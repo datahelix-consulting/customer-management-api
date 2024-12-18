@@ -28,3 +28,21 @@ fun CreateCustomerRequest.toCustomerStub(): Stub = Stub(
     emailAddress = this.emailAddress,
     phoneNumber = this.phoneNumber,
 )
+
+
+data class UpdateCustomerRequest(
+    @JsonProperty("full_name") val fullName: FullName? = null,
+    @JsonProperty("preferred_name") val preferredName: PreferredName? = null,
+    @JsonProperty("email_address") val emailAddress: EmailAddress? = null,
+    @JsonProperty("phone_number") val phoneNumber: PhoneNumber? = null,
+) {
+    companion object
+}
+
+val UpdateCustomerRequest.Companion.sample
+    get() = UpdateCustomerRequest(
+        fullName = Customer.sample.fullName,
+        preferredName = Customer.sample.preferredName,
+        emailAddress = EmailAddress("johnny.doe@gmail.com"),
+        phoneNumber = Customer.sample.phoneNumber,
+    )
